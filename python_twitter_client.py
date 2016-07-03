@@ -13,7 +13,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--config', '-c', required=True, type=str, help='config path')
 args = parser.parse_args()
 tl_default_num = 20
-tweet_format = "[{}] {} >> {}"
+tweet_format = "\n{} @{} {}\n{}"
 
 h = '''
 tl [num] : show timeline default 20 tweets
@@ -24,13 +24,13 @@ stream : streaming timeline
 
 def convert_time(t):
     t += timedelta(hours=9)
-    time = str(t).split(" ")
-    return time[1]
+    time = str(t).replace("-", "/")
+    return time
 
 
 class StreamListener(StreamListener):
     def on_status(self, status):
-        print(tweet_format.format(convert_time(status.created_at), status.user.name, status.text))
+        print(tweet_format.format(status.user.name, status.user.screen_name ,convert_time(status.created_at), status.text))
 
     def on_error(self, status):
         print("Error")
@@ -53,8 +53,8 @@ class PythonTwitterClient(Cmd):
         self.auth = OAuthHandler(consumer_key, consumer_secret)
         self.auth.set_access_token(access_key, access_secret)
         self.api = API(self.auth)
-        self.intro ='\n========== Hello {} ==========\n'.format(self.api.me().name)
-        self.prompt = "PTC >>> "
+        self.intro ='\n========== Hello {} =========='.format(self.api.me().name)
+        self.prompt = '\n@{} >>> '.format(self.api.me().screen_name)
 
     def do_tw(self, tweet):
         try:
@@ -81,7 +81,7 @@ class PythonTwitterClient(Cmd):
             timeline = self.api.home_timeline(count=num)
             timeline.reverse()
             for t in timeline:
-                print(tweet_format.format(convert_time(t.created_at), t.user.name, t.text))
+                print(tweet_format.format(t.user.name, t.user.screen_name, convert_time(t.created_at), t.text))
         except Exception as err:
             print(err)
 
